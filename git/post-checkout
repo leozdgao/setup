@@ -1,0 +1,44 @@
+#! /bin/bash
+
+# 先获取本地仓库 email 和 name 配置
+email=$(git config --local user.email)
+name=$(git config --local user.name)
+
+# 本地 email 或 name 已经被设置时，立即退出
+if [[ -n $email || -n $name ]]; then
+  exit 0
+fi
+
+# 尝试获取 remote origin
+remote=$(git remote | grep $origin^)
+
+# 没有取到 remote origin 则直接退出
+if [[ -z remote ]]; then
+  echo "Failed to detect remote."
+  exit 0
+fi
+
+# 获取 git remote origin 完整地址
+remote_url=$(git config --local remote.${remote}.url)
+path_git_identity="${HOME}/.git-identity"
+
+while read identity_line
+do
+  host=$(echo $identity_line | awk '{print $1}')
+
+  if [[ -n $(echo $remote_url | grep //${host}/) || -n $(echo $remote_url | grep @${host}:) ]]; then 
+    name=$(echo $identity_line | awk '{print $2}')
+    email=$(echo $identity_line | awk '{print $3}')
+  fi
+done < $path_git_identity
+
+if [[ -z $email || -z $name ]]; then
+  echo "Failed to detect email or name."
+  exit 0
+fi
+
+# 重新设置本地仓库 email 与 name
+git config --local user.email $email
+git config --local user.name $name
+
+echo "Identity set to ${name} <${email}>."
