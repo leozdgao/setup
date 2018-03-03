@@ -22,6 +22,7 @@ fi
 remote_url=$(git config --local remote.${remote}.url)
 path_git_identity="${HOME}/.git-identity"
 
+# 读取 git-identity 每行的内容并匹配，固定格式：$host $name $email
 while read identity_line
 do
   host=$(echo $identity_line | awk '{print $1}')
@@ -29,6 +30,8 @@ do
   if [[ -n $(echo $remote_url | grep //${host}/) || -n $(echo $remote_url | grep @${host}:) ]]; then 
     name=$(echo $identity_line | awk '{print $2}')
     email=$(echo $identity_line | awk '{print $3}')
+
+    break
   fi
 done < $path_git_identity
 
